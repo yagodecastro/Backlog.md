@@ -276,6 +276,11 @@ export const TaskDetailsModal: React.FC<Props> = ({
 
   const displayId = useMemo(() => task?.id?.replace(/^task-/i, "TASK-") || "", [task?.id]);
 
+  const sortedHistory = useMemo(() => {
+    if (!task?.history) return [];
+    return [...task.history].reverse();
+  }, [task?.history]);
+
   return (
     <Modal
       isOpen={isOpen}
@@ -473,6 +478,28 @@ export const TaskDetailsModal: React.FC<Props> = ({
               </div>
             )}
           </div>
+
+          {/* Task History */}
+          {sortedHistory.length > 0 && mode === "preview" && (
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+              <SectionHeader title="History" />
+              <div className="space-y-4">
+                {sortedHistory.map((entry, index) => (
+                  <div key={index} className="flex flex-col gap-1 text-sm border-l-2 border-gray-200 dark:border-gray-700 pl-3">
+                    <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <span>{entry.updatedAt} • {entry.author}</span>
+                      {entry.status && (
+                        <span className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                          {entry.status}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-gray-800 dark:text-gray-200">{entry.description}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
