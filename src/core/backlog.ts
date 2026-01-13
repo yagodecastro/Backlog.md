@@ -970,6 +970,26 @@ export class Core {
 
 		task.acceptanceCriteriaItems = acceptanceCriteria;
 
+		applyStringField(input.branchName, task.branchName, (next) => {
+			task.branchName = next;
+		});
+
+		applyStringField(input.gitTag, task.gitTag, (next) => {
+			task.gitTag = next;
+		});
+
+		applyStringField(input.prNumber, task.prNumber, (next) => {
+			task.prNumber = next;
+		});
+
+		if (input.addToHistory) {
+			if (!task.history) {
+				task.history = [];
+			}
+			task.history.push(input.addToHistory);
+			mutated = true;
+		}
+
 		if (!mutated) {
 			return task;
 		}

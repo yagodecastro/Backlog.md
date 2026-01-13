@@ -1774,6 +1774,9 @@ taskCmd
 		createMultiValueAccumulator(),
 	)
 	.option("--acceptance-criteria <criteria>", "set acceptance criteria (comma-separated or use multiple times)")
+	.option("--branch <name>", "set branch name")
+	.option("--tag <tag>", "set git tag")
+	.option("--pr <number>", "set PR number")
 	.option("--plan <text>", "set implementation plan")
 	.option("--notes <text>", "set implementation notes (replaces existing)")
 	.option(
@@ -1924,6 +1927,15 @@ taskCmd
 		if (notesAppendValues.length > 0) {
 			editArgs.notesAppend = notesAppendValues;
 		}
+		if (options.branch) {
+			editArgs.branchName = String(options.branch);
+		}
+		if (options.tag) {
+			editArgs.gitTag = String(options.tag);
+		}
+		if (options.pr) {
+			editArgs.prNumber = String(options.pr);
+		}
 		if (acceptanceAdditions.length > 0) {
 			editArgs.acceptanceCriteriaAdd = acceptanceAdditions;
 		}
@@ -1957,6 +1969,86 @@ taskCmd
 	});
 
 // Note: Implementation notes appending is handled via `task edit --append-notes` only.
+
+taskCmd
+	.command("event <taskId>")
+	.description("add an event to the task history")
+	.requiredOption("-d, --description <text>", "event description")
+	.option("-s, --status <status>", "update task status")
+	.option("-a, --author <author>", "author of the event (defaults to current user)")
+	.option("--date <date>", "date of the event (YYYY-MM-DD HH:mm)")
+	.action(async (taskId: string, options) => {
+		const cwd = await requireProjectRoot();
+		const core = new Core(cwd);
+		const canonicalId = normalizeTaskId(taskId);
+		const existingTask = await core.loadTaskById(canonicalId);
+
+		if (!existingTask) {
+			console.error(`Task ${taskId} not found.`);
+			process.exitCode = 1;
+			return;
+		}
+
+		// Normalize status if provided
+		let canonicalStatus: string | undefined;
+		if (options.status) {
+			const canonical = await getCanonicalStatus(String(options.status), core);
+			if (!canonical) {
+				const configuredStatuses = await getValidStatuses(core);
+				console.error(
+					`Invalid status: ${options.status}. Valid statuses are: ${formatValidStatuses(configuredStatuses)}`,
+				);
+				process.exitCode = 1;
+				return;
+			}
+			canonicalStatus = canonical;
+		}
+
+		// Determine author
+		let author = "unknown";
+		if (options.author) {
+			author = String(options.author);
+		} else {
+			// Try to get default assignee or reporter from config
+			const config = await core.filesystem.loadConfig();
+			if (config?.defaultAssignee) {
+				author = config.defaultAssignee;
+			} else if (config?.defaultReporter) {
+				author = config.defaultReporter;
+			} else {
+				// Fallback to git user name if possible
+				try {
+					const user = await core.gitOps.getCurrentUser();
+					if (user) author = user;
+				} catch {}
+			}
+		}
+
+		// Create history entry
+		const historyEntry = {
+			updatedAt: options.date ? String(options.date) : new Date().toISOString().slice(0, 16).replace("T", " "),
+			description: String(options.description),
+			author,
+			status: canonicalStatus || existingTask.status || "",
+		};
+
+		const editArgs: TaskEditArgs = {
+			historyEntry,
+		};
+
+		if (canonicalStatus) {
+			editArgs.status = canonicalStatus;
+		}
+
+		try {
+			const updateInput = buildTaskUpdateInput(editArgs);
+			const updatedTask = await core.editTask(canonicalId, updateInput);
+			console.log(`Added event to task ${updatedTask.id}`);
+		} catch (error) {
+			console.error(error instanceof Error ? error.message : String(error));
+			process.exitCode = 1;
+		}
+	});
 
 taskCmd
 	.command("view <taskId>")
