@@ -42,6 +42,13 @@ export type TaskSearchArgs = {
 	limit?: number;
 };
 
+export type TaskEventArgs = {
+	id: string;
+	description: string;
+	status?: string;
+	author?: string;
+};
+
 export class TaskHandlers {
 	constructor(private readonly core: McpServer) {}
 
@@ -300,6 +307,52 @@ export class TaskHandlers {
 		try {
 			const updateInput = buildTaskUpdateInput(args);
 			const updatedTask = await this.core.editTask(args.id, updateInput);
+			return await formatTaskCallResult(updatedTask);
+		} catch (error) {
+			if (error instanceof Error) {
+				throw new McpError(error.message, "VALIDATION_ERROR");
+			}
+			throw new McpError(String(error), "VALIDATION_ERROR");
+		}
+	}
+
+	async taskEvent(args: TaskEventArgs): Promise<CallToolResult> {
+		const task = await this.loadTaskOrThrow(args.id);
+
+		let author = args.author;
+		if (!author) {
+			const config = await this.core.filesystem.loadConfig();
+			if (config?.defaultAssignee) {
+				author = config.defaultAssignee;
+			} else if (config?.defaultReporter) {
+				author = config.defaultReporter;
+			} else {
+				try {
+					const user = await this.core.gitOps.getCurrentUser();
+					if (user) author = user;
+				} catch {}
+			}
+		}
+
+		const historyEntry = {
+			updatedAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+			description: args.description,
+			author: author || "unknown",
+			status: args.status || task.status || "",
+		};
+
+		const editArgs: TaskEditRequest = {
+			id: task.id,
+			historyEntry,
+		};
+
+		if (args.status) {
+			editArgs.status = args.status;
+		}
+
+		try {
+			const updateInput = buildTaskUpdateInput(editArgs);
+			const updatedTask = await this.core.editTask(editArgs.id, updateInput);
 			return await formatTaskCallResult(updatedTask);
 		} catch (error) {
 			if (error instanceof Error) {

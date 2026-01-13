@@ -12,6 +12,13 @@ export interface AcceptanceCriterionInput {
 	checked?: boolean;
 }
 
+export interface TaskHistoryEntry {
+	updatedAt: string;
+	description: string;
+	author: string;
+	status: string;
+}
+
 export interface Task {
 	id: string;
 	title: string;
@@ -40,6 +47,10 @@ export interface Task {
 	source?: "local" | "remote" | "completed" | "local-branch";
 	/** Optional per-task callback command to run on status change (overrides global config) */
 	onStatusChange?: string;
+	branchName?: string;
+	gitTag?: string;
+	prNumber?: string;
+	history?: TaskHistoryEntry[];
 }
 
 export interface MilestoneBucket {
@@ -108,6 +119,10 @@ export interface TaskUpdateInput {
 	checkAcceptanceCriteria?: number[];
 	uncheckAcceptanceCriteria?: number[];
 	rawContent?: string;
+	branchName?: string;
+	gitTag?: string;
+	prNumber?: string;
+	addToHistory?: TaskHistoryEntry;
 }
 
 export interface TaskListFilter {

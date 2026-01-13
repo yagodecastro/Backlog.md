@@ -3,9 +3,16 @@ import type { McpServer } from "../../server.ts";
 import type { McpToolHandler } from "../../types.ts";
 import { generateTaskCreateSchema, generateTaskEditSchema } from "../../utils/schema-generators.ts";
 import { createSimpleValidatedTool } from "../../validation/tool-wrapper.ts";
-import type { TaskCreateArgs, TaskEditRequest, TaskListArgs, TaskSearchArgs } from "./handlers.ts";
+import type { TaskCreateArgs, TaskEditRequest, TaskEventArgs, TaskListArgs, TaskSearchArgs } from "./handlers.ts";
 import { TaskHandlers } from "./handlers.ts";
-import { taskArchiveSchema, taskCompleteSchema, taskListSchema, taskSearchSchema, taskViewSchema } from "./schemas.ts";
+import {
+	taskArchiveSchema,
+	taskCompleteSchema,
+	taskEventSchema,
+	taskListSchema,
+	taskSearchSchema,
+	taskViewSchema,
+} from "./schemas.ts";
 
 export function registerTaskTools(server: McpServer, config: BacklogConfig): void {
 	const handlers = new TaskHandlers(server);
@@ -84,6 +91,16 @@ export function registerTaskTools(server: McpServer, config: BacklogConfig): voi
 		async (input) => handlers.completeTask(input as { id: string }),
 	);
 
+	const taskEventTool: McpToolHandler = createSimpleValidatedTool(
+		{
+			name: "task_event",
+			description: "Add an event to the task history (e.g. status change, comment, update)",
+			inputSchema: taskEventSchema,
+		},
+		taskEventSchema,
+		async (input) => handlers.taskEvent(input as TaskEventArgs),
+	);
+
 	server.addTool(createTaskTool);
 	server.addTool(listTaskTool);
 	server.addTool(searchTaskTool);
@@ -91,6 +108,7 @@ export function registerTaskTools(server: McpServer, config: BacklogConfig): voi
 	server.addTool(viewTaskTool);
 	server.addTool(archiveTaskTool);
 	server.addTool(completeTaskTool);
+	server.addTool(taskEventTool);
 }
 
 export type { TaskCreateArgs, TaskEditArgs, TaskListArgs, TaskSearchArgs } from "./handlers.ts";

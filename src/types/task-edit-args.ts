@@ -1,3 +1,5 @@
+import type { TaskHistoryEntry } from "./index.ts";
+
 export interface TaskEditArgs {
 	title?: string;
 	description?: string;
@@ -23,6 +25,10 @@ export interface TaskEditArgs {
 	acceptanceCriteriaRemove?: number[];
 	acceptanceCriteriaCheck?: number[];
 	acceptanceCriteriaUncheck?: number[];
+	branchName?: string;
+	gitTag?: string;
+	prNumber?: string;
+	historyEntry?: TaskHistoryEntry;
 }
 
 export type TaskEditRequest = TaskEditArgs & { id: string };

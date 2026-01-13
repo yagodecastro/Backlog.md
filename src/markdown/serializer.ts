@@ -21,6 +21,10 @@ export function serializeTask(task: Task): string {
 		...(task.priority && { priority: task.priority }),
 		...(task.ordinal !== undefined && { ordinal: task.ordinal }),
 		...(task.onStatusChange && { onStatusChange: task.onStatusChange }),
+		...(task.branchName && { branch_name: task.branchName }),
+		...(task.gitTag && { git_tag: task.gitTag }),
+		...(task.prNumber && { pr_number: task.prNumber }),
+		...(task.history && task.history.length > 0 && { history: task.history }),
 	};
 
 	let contentBody = task.rawContent ?? "";
