@@ -94,6 +94,31 @@ export const taskCompleteSchema: JsonSchema = {
 	additionalProperties: false,
 };
 
+export const taskEventSchema: JsonSchema = {
+	type: "object",
+	properties: {
+		id: {
+			type: "string",
+			minLength: 1,
+			maxLength: 50,
+		},
+		description: {
+			type: "string",
+			minLength: 1,
+		},
+		status: {
+			type: "string",
+			maxLength: 100,
+		},
+		author: {
+			type: "string",
+			maxLength: 100,
+		},
+	},
+	required: ["id", "description"],
+	additionalProperties: false,
+};
+
 export const taskDemoteSchema: JsonSchema = {
 	type: "object",
 	properties: {

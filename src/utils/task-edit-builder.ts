@@ -135,5 +135,21 @@ export function buildTaskUpdateInput(args: TaskEditArgs): TaskUpdateInput {
 		updateInput.uncheckAcceptanceCriteria = [...args.acceptanceCriteriaUncheck];
 	}
 
+	if (typeof args.branchName === "string") {
+		updateInput.branchName = args.branchName;
+	}
+
+	if (typeof args.gitTag === "string") {
+		updateInput.gitTag = args.gitTag;
+	}
+
+	if (typeof args.prNumber === "string") {
+		updateInput.prNumber = args.prNumber;
+	}
+
+	if (args.historyEntry) {
+		updateInput.addToHistory = args.historyEntry;
+	}
+
 	return updateInput;
 }

@@ -1,5 +1,13 @@
 import matter from "gray-matter";
-import type { AcceptanceCriterion, Decision, Document, Milestone, ParsedMarkdown, Task } from "../types/index.ts";
+import type {
+	AcceptanceCriterion,
+	Decision,
+	Document,
+	Milestone,
+	ParsedMarkdown,
+	Task,
+	TaskHistoryEntry,
+} from "../types/index.ts";
 import { AcceptanceCriteriaManager, extractStructuredSection, STRUCTURED_SECTION_KEYS } from "./structured-sections.ts";
 
 function normalizeFlowList(prefix: string, rawValue: string): string | null {
@@ -155,6 +163,15 @@ export function parseTask(content: string): Task {
 	const planSection = extractStructuredSection(rawContent, STRUCTURED_SECTION_KEYS.implementationPlan) || undefined;
 	const notesSection = extractStructuredSection(rawContent, STRUCTURED_SECTION_KEYS.implementationNotes) || undefined;
 
+	const history: TaskHistoryEntry[] = Array.isArray(frontmatter.history)
+		? frontmatter.history.map((entry: Record<string, unknown>) => ({
+				updatedAt: String(entry.updatedAt || ""),
+				description: String(entry.description || ""),
+				author: String(entry.author || ""),
+				status: String(entry.status || ""),
+			}))
+		: [];
+
 	return {
 		id: String(frontmatter.id || ""),
 		title: String(frontmatter.title || ""),
@@ -180,6 +197,10 @@ export function parseTask(content: string): Task {
 		priority: validatedPriority,
 		ordinal: frontmatter.ordinal !== undefined ? Number(frontmatter.ordinal) : undefined,
 		onStatusChange: frontmatter.onStatusChange ? String(frontmatter.onStatusChange) : undefined,
+		branchName: frontmatter.branch_name ? String(frontmatter.branch_name) : undefined,
+		gitTag: frontmatter.git_tag ? String(frontmatter.git_tag) : undefined,
+		prNumber: frontmatter.pr_number ? String(frontmatter.pr_number) : undefined,
+		history: history.length > 0 ? history : undefined,
 	};
 }
 
